@@ -11,7 +11,7 @@ int SRCLKPin = 4;
 int dataPin = 2;
 int d[] = {5,6,7,8};
 ThreeWire myWire(10,9,11); // IO, SCLK, CE
-int buzzerPin = 14;//A0;
+int buzzerPin = A0;//14;//A0;
 int tempPin   = A2;
 int knopKlant = A4;
 int knopKassa = A5;
@@ -57,6 +57,19 @@ void setup() {
   pinMode(knopKassa, INPUT_PULLUP);
 }
 
+/*
+ * Toon een Cijfer of letter op een bepaalde digidisplay voor duration ms
+ */
+void toonASCII(unsigned char c, unsigned char digidisplay, int duration) {
+  
+}
+void toonString(const char *string, int lengte) {
+  
+}
+
+/*
+ * Toon een cijfer op een digidisplay voor duration ms
+ */
 void toonCijfer(unsigned char cijfer, unsigned char digidisplay, int duration){
   digitalWrite(digidisplay,false);
   digitalWrite(RCLKPin,LOW);
@@ -66,6 +79,10 @@ void toonCijfer(unsigned char cijfer, unsigned char digidisplay, int duration){
   digitalWrite(digidisplay,true);
 }
 
+/*
+ * Toon de gegeven pointer dt tijd
+ *  2 decimalen voor het uur afgesplitst met een '.' vervolgd door de minuten
+ */
 void toonUur(const RtcDateTime *dt, int duration){
   unsigned char uur     = dt->Hour();
   unsigned char minuut  = dt->Minute();
@@ -78,6 +95,22 @@ void toonUur(const RtcDateTime *dt, int duration){
   toonCijfer(cijfers[u2]|0x01,d[1],duration/4);
   toonCijfer(cijfers[m1],d[2],duration/4);
   toonCijfer(cijfers[m2],d[3],duration/4);
+}
+
+/*
+ * Toon de huidige temperatuur -> 2 decimalen voor komma en 1 na.
+ *  ->voor een duration periode
+ */
+void toonTemp(float temp, int duration){
+  unsigned char tiental   = (char)(temp/10);
+  unsigned char eenheid   = (char)(temp-tiental*10);
+  unsigned char komma1    = (char)((temp-tiental*10-eenheid)*10); // 0.52 ofzo*10->5.2
+  unsigned char komma2    = (char)((temp-tiental*10-eenheid-komma1)); //0.52->
+  // Show hour on first two displays
+  toonCijfer(cijfers[tiental],d[0],duration/4);
+  toonCijfer(cijfers[eenheid]|0x01,d[1],duration/4);
+  toonCijfer(cijfers[komma1],d[2],duration/4);
+  toonCijfer(letters[2],d[3],duration/4);
 }
 
 void toonGetal(int cijfer, int duration){
@@ -127,12 +160,13 @@ void loop() {
       digitalWrite(buzzerPin,true);
     }
     
-    
     /*=========================*/
     /*       TEMPERATUUR       */
     /*=========================*/
-    float mv = analogRead(tempPin)/1024*5000;
+    int val = analogRead(A3);
+    float mv = (float)val/1024*5000;
     float celcius = mv/10;
+    
     
 
     /*=========================*/
@@ -147,7 +181,8 @@ void loop() {
     // Moeten we het scherm updaten?
     if (currentScreenTime>=refreshTime){
       // Om de 16 ms
-      toonUur(&now,refreshTime);
+      //toonUur(&now,refreshTime);
+      toonTemp(celcius,refreshTime);
       currentScreenTime=0;
     }
 
