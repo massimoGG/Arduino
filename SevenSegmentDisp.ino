@@ -3,7 +3,7 @@
 
 // Configuratie
 const int TimeModuleUpdate= 10000; // every 10 seconds
-const int refreshTime = 10; // 4 ms
+const int refreshTime = 4; // 4 ms
 
 int RCLKPin = 3;
 int SRCLKPin = 4;
