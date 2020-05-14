@@ -22,7 +22,6 @@ static unsigned char letters[] {
 
 RtcDS1302<ThreeWire> Rtc(myWire);
 void setup() {
-  Serial.begin(115200);
   pinMode(RCLKPin, OUTPUT);
   pinMode(SRCLKPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
@@ -30,6 +29,20 @@ void setup() {
     pinMode(d[i],OUTPUT);
     digitalWrite(d[i],true);
   }
+  
+  RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
+  Rtc.SetIsWriteProtected(false);
+  Rtc.SetIsRunning(true);
+  
+  if (!Rtc.IsDateTimeValid()) {
+    Rtc.SetDateTime(compiled);
+  }
+  
+  RtcDateTime now = Rtc.GetDateTime();
+  if (now < compiled) {
+    Rtc.SetDateTime(compiled);
+  }
+  Rtc.SetIsWriteProtected(true);
 }
 
 void toonCijfer(unsigned char cijfer, unsigned char digidisplay, int duration){
@@ -70,7 +83,6 @@ void loop() {
   int currentTime = 0;
   RtcDateTime nu = Rtc.GetDateTime();
   while (currentTime<TimeModuleUpdate) {
-    //toonGetal(1234,100);
     toonUur(&nu,refreshTime);
     currentTime+=refreshTime;
   }
