@@ -43,7 +43,6 @@ void setup() {
   if (now < compiled) {
     Rtc.SetDateTime(compiled);
   }
-  Rtc.SetIsWriteProtected(true);
 }
 
 void toonCijfer(unsigned char cijfer, unsigned char digidisplay, int duration){
