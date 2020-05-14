@@ -40,7 +40,6 @@ void setup() {
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
   Rtc.SetIsWriteProtected(false);
   Rtc.SetIsRunning(true);
-  Rtc.SetDateTime(compiled);
   
   if (!Rtc.IsDateTimeValid()) {
     Rtc.SetDateTime(compiled);
