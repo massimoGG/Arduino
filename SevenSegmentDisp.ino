@@ -27,6 +27,7 @@ static unsigned char letters[] {
 };// A b C D      E F H E  L   O
 
 RtcDS1302<ThreeWire> Rtc(myWire);
+
 void setup() {
   pinMode(RCLKPin, OUTPUT);
   pinMode(SRCLKPin, OUTPUT);
@@ -52,6 +53,8 @@ void setup() {
   pinMode(buzzerPin,OUTPUT);
   pinMode(ledPin,OUTPUT);
   digitalWrite(buzzerPin,false);
+  pinMode(knopKlant, INPUT_PULLUP);
+  pinMode(knopKassa, INPUT_PULLUP);
 }
 
 void toonCijfer(unsigned char cijfer, unsigned char digidisplay, int duration){
@@ -88,7 +91,6 @@ void toonGetal(int cijfer, int duration){
   toonCijfer(cijfers[eenheid],d[3],duration/4);
 }
 
-int currentTime       = 0;
 int currentKlokTime   = 0;
 int currentScreenTime = 0;
 int currentBuzzerTime = -1;
@@ -105,15 +107,14 @@ void loop() {
     /*         KNOPPEN         */
     /*=========================*/
     // Klant knop 
-    if (analogRead(knopKlant)>1000) {
-      // Boven 5V
+    if (digitalRead(knopKlant)==1) {
       // Zet de led aan
       digitalWrite(ledPin,true);
       // Start timer
       currentBuzzerTime=0;
     }
     // Kassa knop
-    if (analogRead(knopKassa)>1000) {
+    if (digitalRead(knopKassa)==1) {
       // Zet de led terug uit
       digitalWrite(ledPin,false);
       // Zet ook de buzzer uit indien dit het geval was
@@ -125,7 +126,7 @@ void loop() {
       // Zet de buzzer aan
       digitalWrite(buzzerPin,true);
     }
-
+    
     
     /*=========================*/
     /*       TEMPERATUUR       */
@@ -139,16 +140,14 @@ void loop() {
     /*=========================*/
     // Moeten we de klok updaten?
     if (currentKlokTime>=TimeModuleUpdate){
-      // get newest time from module
+      // Ontvang huidige tijd van RTC module
       now = Rtc.GetDateTime();
       currentKlokTime=0;
     }
     // Moeten we het scherm updaten?
     if (currentScreenTime>=refreshTime){
-      // Om de 4 ms
+      // Om de 16 ms
       toonUur(&now,refreshTime);
-      // Ook currentTime updaten
-      currentTime+=refreshTime;
       currentScreenTime=0;
     }
 
@@ -159,7 +158,6 @@ void loop() {
     int delta = (eindet-begint);
     
     // Alle huidige tijden optellen
-    currentTime       += delta;
     currentKlokTime   += delta;
     currentScreenTime += delta;
 
