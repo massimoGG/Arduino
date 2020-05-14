@@ -124,6 +124,7 @@ void toonGetal(int cijfer, int duration){
   toonCijfer(cijfers[eenheid],d[3],duration/4);
 }
 
+int afwisseling = 0;
 int currentKlokTime   = 0;
 int currentScreenTime = 0;
 int currentBuzzerTime = -1;
@@ -181,8 +182,11 @@ void loop() {
     // Moeten we het scherm updaten?
     if (currentScreenTime>=refreshTime){
       // Om de 16 ms
-      //toonUur(&now,refreshTime);
-      toonTemp(celcius,refreshTime);
+      if (afwisseling<2500) {
+        toonUur(&now,refreshTime);
+      } else {
+        toonTemp(celcius,refreshTime);
+      }
       currentScreenTime=0;
     }
 
@@ -199,6 +203,11 @@ void loop() {
     // Enkel optellen als de timer aan staat
     if (currentBuzzerTime>=0) {
       currentBuzzerTime+=delta;
+    }
+
+    afwisseling+=delta;
+    if (afwisseling>=5000){
+      afwisseling=0;
     }
   }
 }
