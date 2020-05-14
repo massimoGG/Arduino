@@ -80,10 +80,9 @@ void toonGetal(int cijfer, int duration){
 }
 
 void loop() {
-  /*
-  int currentTime = 0;*/
+  int currentTime = 0;
   while (currentTime<TimeModuleUpdate) {
     toonUur(Rtc.GetDateTime(),refreshTime);
-/*    currentTime+=refreshTime;*/
+    currentTime+=refreshTime*4;
   }
 }
