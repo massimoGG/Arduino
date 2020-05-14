@@ -2,7 +2,7 @@
 #include <RtcDS1302.h>
 
 // Configuratie
-const int TimeModuleUpdate= 10000; // every 10 seconds
+const int TimeModuleUpdate= 1000; // every 10 seconds
 const int refreshTime = 4; // 4 ms
 
 int RCLKPin = 3;
@@ -80,10 +80,10 @@ void toonGetal(int cijfer, int duration){
 }
 
 void loop() {
-  int currentTime = 0;
-  RtcDateTime nu = Rtc.GetDateTime();
+  /*
+  int currentTime = 0;*/
   while (currentTime<TimeModuleUpdate) {
-    toonUur(&nu,refreshTime);
-    currentTime+=refreshTime;
+    toonUur(Rtc.GetDateTime(),refreshTime);
+/*    currentTime+=refreshTime;*/
   }
 }
