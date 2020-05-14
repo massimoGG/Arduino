@@ -29,10 +29,11 @@ void setup() {
     pinMode(d[i],OUTPUT);
     digitalWrite(d[i],true);
   }
-  
+  Rtc.Begin();
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
   Rtc.SetIsWriteProtected(false);
   Rtc.SetIsRunning(true);
+  Rtc.SetDateTime(compiled);
   
   if (!Rtc.IsDateTimeValid()) {
     Rtc.SetDateTime(compiled);
@@ -42,7 +43,6 @@ void setup() {
   if (now < compiled) {
     Rtc.SetDateTime(compiled);
   }
-  Rtc.SetIsWriteProtected(true);
 }
 
 void toonCijfer(unsigned char cijfer, unsigned char digidisplay, int duration){
