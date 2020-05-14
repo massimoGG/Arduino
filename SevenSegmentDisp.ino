@@ -2,8 +2,8 @@
 #include <RtcDS1302.h>
 
 // Configuratie
-const int TimeModuleUpdate= 1000; // every 10 seconds
-const int refreshTime = 4; // 4 ms
+const int TimeModuleUpdate= 10000; // every 10 seconds
+const int refreshTime = 10; // 4 ms
 
 int RCLKPin = 3;
 int SRCLKPin = 4;
@@ -43,6 +43,7 @@ void setup() {
   if (now < compiled) {
     Rtc.SetDateTime(compiled);
   }
+  Rtc.SetIsWriteProtected(true);
 }
 
 void toonCijfer(unsigned char cijfer, unsigned char digidisplay, int duration){
@@ -81,8 +82,9 @@ void toonGetal(int cijfer, int duration){
 
 void loop() {
   int currentTime = 0;
+  RtcDateTime now = Rtc.GetDateTime();
   while (currentTime<TimeModuleUpdate) {
-    toonUur(Rtc.GetDateTime(),refreshTime);
+    toonUur(&now,refreshTime);
     currentTime+=refreshTime*4;
   }
 }
