@@ -7,6 +7,7 @@
 const int TimeModuleUpdate = 10000; // every 10 seconds
 const int timeoutBuzzer    = 5000;
 const int refreshTime      = 16;
+const int SHOWTIME         = 5000;
 
 /*=========================*/
 /*   PIN CONFIGURATION     */
@@ -27,7 +28,7 @@ ThreeWire myWire(10,9,11); // IO, SCLK, CE
 int buzzerPin = A0;//14;//A0;
 
 // Temperature pin
-int tempPin   = A2;
+int tempPin   = A3;
 
 // Button of customer
 int buttonCustomer = A4;
@@ -64,6 +65,7 @@ int currentKlokTime   = 0;
 int currentScreenTime = 0;
 int currentBuzzerTime = -1;
 int currentTimeText   = -1;
+int showText          = 0;
 
 // Initialisation of RTC module
 RtcDS1302<ThreeWire> Rtc(myWire);
@@ -133,7 +135,10 @@ void toonString(const char *string, int strsize, int showtime,int timepershift, 
       currentShift--;
       *currentTime=0;
     }
-    if (currentShift<-strsize) currentShift=strsize-1;
+    if (currentShift<-strsize) {
+      // End of string
+      *currentTime=-1;
+    }
   }
 
   // toon voor 4 disps
@@ -202,8 +207,23 @@ void toonGetal(int cijfer, int duration){
 /*
  * SetPin function
  */
-void sp(int p, int s){
+void sp(int p, int s) {
   digitalWrite(p,s);
+}
+
+/*=========================*/
+/*       TEMPERATUUR       */
+/*=========================*/
+double getC() {
+  double celcius = (double)analogRead(tempPin)/1024*500;
+  if(celcius>10){
+    sp(tempLED[0],true);
+    sp(tempLED[1],false);
+    sp(tempLED[2],false);
+  } else sp(tempLED[0],false);
+  if(celcius>20) sp(tempLED[1],true);
+  else sp(tempLED[2],true);
+  return celcius;
 }
 
 void loop() {
@@ -212,7 +232,7 @@ void loop() {
   /*=========================*/
   /*       TEMPERATUUR       */
   /*=========================*/
-  double celcius = (float)analogRead(A3)/1024*500;
+  double celcius = getC();
 
   // Voor eeuwig laten runnen
   while (1) {
@@ -230,6 +250,7 @@ void loop() {
       digitalWrite(ledPin,false);
       digitalWrite(buzzerPin,false);
       currentBuzzerTime=-1;
+      showText=2;
     }
     if (currentBuzzerTime>=timeoutBuzzer) {
       digitalWrite(buzzerPin,true);
@@ -243,32 +264,30 @@ void loop() {
       // Ontvang huidige tijd van RTC module
       now = Rtc.GetDateTime();
       currentKlokTime=0;
-      /*=========================*/
-      /*       TEMPERATUUR       */
-      /*=========================*/
-      celcius = (float)analogRead(A3)/1024*500;
-      if(celcius>10){
-        sp(tempLED[0],true);
-        sp(tempLED[1],false);
-        sp(tempLED[2],false);
-      } else sp(tempLED[0],false);
-      if(celcius>20) sp(tempLED[1],true);
-      else sp(tempLED[2],true);
+      celcius = getC();
     }
     // Moeten we het scherm updaten?
     if (currentScreenTime>=refreshTime){
-      // Om de 16 ms
-      if (afwisseling<2500) {
-        toonUur(&now,refreshTime);
+      /*=========================*/
+      /*      ROLLING TEXT       */
+      /*=========================*/
+      if (showText>0) {
+        // Show HELLO for two times
+        toonString("HELLO", 5, refreshTime, 200, &currentTimeText);
+        if (currentTimeText==-1) {
+          // End of string
+          showText--;
+        }
       } else {
-        toonTemp(celcius,refreshTime);
+        // Show clock & temp
+        if (afwisseling<SHOWTIME) {
+          toonUur(&now,refreshTime);
+        } else {
+          toonTemp(celcius,refreshTime);
+        }
       }
       currentScreenTime=0;
     }
-
-    /*=========================*/
-    /*      ROLLING TEXT       */
-    /*=========================*/
     
     /*=========================*/
     /*        TIMER CORE       */
@@ -285,7 +304,7 @@ void loop() {
     if (currentBuzzerTime>=0) currentBuzzerTime += delta;
 
     afwisseling+=delta;
-    if (afwisseling>=5000){
+    if (afwisseling>=SHOWTIME*2){
       afwisseling=0;
     }
   }
