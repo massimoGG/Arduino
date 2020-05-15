@@ -205,7 +205,7 @@ void loop() {
     }
 
     afwisseling+=delta;
-    if (afwisseling>=5000){
+    if (afwisseling>=10000){
       afwisseling=0;
     }
   }
