@@ -1,22 +1,48 @@
 #include <ThreeWire.h>  
 #include <RtcDS1302.h>
 
-// Configuratie
+/*=========================*/
+/*   TIJD CONFIGURATION    */
+/*=========================*/
 const int TimeModuleUpdate = 10000; // every 10 seconds
 const int timeoutBuzzer    = 5000;
 const int refreshTime      = 16;
 
+/*=========================*/
+/*   PIN CONFIGURATION     */
+/*=========================*/
+// Shiftregister
 int RCLKPin = 3;
 int SRCLKPin = 4;
 int dataPin = 2;
-int d[] = {5,6,7,8};
+
+// Common ground pins for 7segment displays
+int gndSeg[] = {5,6,7,8};
+int tempLED[] = {A2,A1,13};
+
+// Pin config for RTC 1302 module
 ThreeWire myWire(10,9,11); // IO, SCLK, CE
+
+// Buzzer pin
 int buzzerPin = A0;//14;//A0;
+
+// Temperature pin
 int tempPin   = A2;
-int knopKlant = A4;
-int knopKassa = A5;
+
+// Button of customer
+int buttonCustomer = A4;
+
+// Button of register
+int buttonRegister = A5;
+
+// LED pin
 int ledPin    = 12;
 
+
+
+/*=========================*/
+/*        Main Code        */
+/*=========================*/
 // bits van cijfers
 static unsigned char cijfers[] {
   252,96,218,242,102,182,190,224,254,246
@@ -26,39 +52,49 @@ static unsigned char letters[] {
   238,62,156,122,158,142,0,110,0,0,0,28,0,0,252,206,230,0,182,0,124,0,0,0,218
 };//A, b,  C,  D,  E,  F,G,H,  I,J,K, L,M,N,  O,  P,  Q,R,  S,T,  U,V,X,Y,Z
 
+// POSSIBLE SEGMENT ASCII TABLE
 // -48 for offset!
 static unsigned char ascii[] {
   252,96,218,242,102,182,190,224,254,246,0,0,0,0,0,0,0,238,62,156,122,158,142,0,110,0,0,0,28,0,0,252,206,230,0,182,0,124,0,0,0,218
 };
 
+// TIMERS for program -> Do not touch :)
+int afwisseling = 0;
+int currentKlokTime   = 0;
+int currentScreenTime = 0;
+int currentBuzzerTime = -1;
+int currentTimeText   = -1;
+
+// Initialisation of RTC module
 RtcDS1302<ThreeWire> Rtc(myWire);
 
 void setup() {
   pinMode(RCLKPin, OUTPUT);
   pinMode(SRCLKPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
-  for (int i=0;i<sizeof(d);i++){
-    pinMode(d[i],OUTPUT);
-    digitalWrite(d[i],true);
+  for (int i=0;i<sizeof(gndSeg);i++){
+    pinMode(gndSeg[i],OUTPUT);
   }
+  for (int i=0;i<sizeof(tempLED);i++){
+    pinMode(tempLED[i],OUTPUT);
+  }
+  pinMode(buzzerPin,OUTPUT);
+  pinMode(ledPin,OUTPUT);
+  pinMode(buttonCustomer, INPUT_PULLUP);
+  pinMode(buttonRegister, INPUT_PULLUP);
+
+  // Start the RTC klok module & 
   Rtc.Begin();
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
   Rtc.SetIsWriteProtected(false);
   Rtc.SetIsRunning(true);
-  
   if (!Rtc.IsDateTimeValid()) {
     Rtc.SetDateTime(compiled);
   }
-  
   RtcDateTime now = Rtc.GetDateTime();
   if (now < compiled) {
     Rtc.SetDateTime(compiled);
   }
-  pinMode(buzzerPin,OUTPUT);
-  pinMode(ledPin,OUTPUT);
-  digitalWrite(buzzerPin,false);
-  pinMode(knopKlant, INPUT_PULLUP);
-  pinMode(knopKassa, INPUT_PULLUP);
 }
 
 /*
@@ -66,7 +102,7 @@ void setup() {
  */
 void toonASCII(unsigned char c, unsigned char digidisplay, int duration) {
   // Ground op low zetten -> 0V
-  digitalWrite(d[digidisplay],false);
+  digitalWrite(gndSeg[digidisplay],false);
   // RClock pin op low zetten -> Nieuwe seriele data komt binnen 
   digitalWrite(RCLKPin,LOW);
   // Shift de bits
@@ -76,7 +112,7 @@ void toonASCII(unsigned char c, unsigned char digidisplay, int duration) {
   // Toon het voor duration time
   delay(duration);
   // Zet scherm uit
-  digitalWrite(d[digidisplay],true);
+  digitalWrite(gndSeg[digidisplay],true);
 }
 
 /*
@@ -110,12 +146,12 @@ void toonString(const char *string, int strsize, int showtime,int timepershift, 
  * Toon een cijfer op een digidisplay voor duration ms
  */
 void toonCijfer(unsigned char cijfer, unsigned char digidisplay, int duration){
-  digitalWrite(d[digidisplay],false);
+  digitalWrite(gndSeg[digidisplay],false);
   digitalWrite(RCLKPin,LOW);
   shiftOut(dataPin,SRCLKPin,LSBFIRST,cijfer);
   digitalWrite(RCLKPin,HIGH);
   delay(duration);
-  digitalWrite(d[digidisplay],true);
+  digitalWrite(gndSeg[digidisplay],true);
 }
 
 /*
@@ -130,10 +166,10 @@ void toonUur(const RtcDateTime *dt, int duration){
   unsigned char m1      = minuut/10;
   unsigned char m2      = (minuut-m1*10);
   // Show hour on first two displays
-  toonCijfer(cijfers[u1],d[0],duration/4);
-  toonCijfer(cijfers[u2]|0x01,d[1],duration/4);
-  toonCijfer(cijfers[m1],d[2],duration/4);
-  toonCijfer(cijfers[m2],d[3],duration/4);
+  toonCijfer(cijfers[u1],0,duration/4);
+  toonCijfer(cijfers[u2]|0x01,1,duration/4);
+  toonCijfer(cijfers[m1],2,duration/4);
+  toonCijfer(cijfers[m2],3,duration/4);
 }
 
 /*
@@ -163,15 +199,20 @@ void toonGetal(int cijfer, int duration){
   toonCijfer(cijfers[eenheid],3,duration/4);
 }
 
-int afwisseling = 0;
-int currentKlokTime   = 0;
-int currentScreenTime = 0;
-int currentBuzzerTime = -1;
-int currentTimeText   = -1;
+/*
+ * SetPin function
+ */
+void sp(int p, int s){
+  digitalWrite(p,s);
+}
 
 void loop() {
   // Ontvang huidige tijd van RTC module
   RtcDateTime now = Rtc.GetDateTime();
+  /*=========================*/
+  /*       TEMPERATUUR       */
+  /*=========================*/
+  double celcius = (float)analogRead(A3)/1024*500;
 
   // Voor eeuwig laten runnen
   while (1) {
@@ -181,14 +222,14 @@ void loop() {
     /*         KNOPPEN         */
     /*=========================*/
     // Klant knop 
-    if (digitalRead(knopKlant)==1) {
+    if (digitalRead(buttonCustomer)==1) {
       // Zet de led aan
       digitalWrite(ledPin,true);
       // Start timer
       currentBuzzerTime=0;
     }
     // Kassa knop
-    if (digitalRead(knopKassa)==1) {
+    if (digitalRead(buttonRegister)==1) {
       // Zet de led terug uit
       digitalWrite(ledPin,false);
       // Zet ook de buzzer uit indien dit het geval was
@@ -201,13 +242,6 @@ void loop() {
       digitalWrite(buzzerPin,true);
     }
     
-    /*=========================*/
-    /*       TEMPERATUUR       */
-    /*=========================*/
-    int val = analogRead(A3);
-    float mv = (float)val/1024*5000;
-    float celcius = mv/10;
-    
     
 
     /*=========================*/
@@ -218,23 +252,32 @@ void loop() {
       // Ontvang huidige tijd van RTC module
       now = Rtc.GetDateTime();
       currentKlokTime=0;
+      /*=========================*/
+      /*       TEMPERATUUR       */
+      /*=========================*/
+      celcius = (float)analogRead(A3)/1024*500;
+      if(celcius>10){
+        sp(tempLED[0],true);
+        sp(tempLED[1],false);
+        sp(tempLED[2],false);
+      } else sp(tempLED[0],false);
+      if(celcius>20) sp(tempLED[1],true);
+      else sp(tempLED[2],true);
     }
     // Moeten we het scherm updaten?
     if (currentScreenTime>=refreshTime){
       // Om de 16 ms
-      /*
       if (afwisseling<2500) {
         toonUur(&now,refreshTime);
       } else {
         toonTemp(celcius,refreshTime);
-      }*/
+      }
       currentScreenTime=0;
     }
 
     /*=========================*/
     /*      ROLLING TEXT       */
     /*=========================*/
-    toonString("HELLO",5,4,500,&currentTimeText);
     
     /*=========================*/
     /*        TIMER CORE       */
