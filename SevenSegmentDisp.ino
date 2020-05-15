@@ -1,16 +1,23 @@
 #include <ThreeWire.h>  
 #include <RtcDS1302.h>
 
-// Configuratie
+/*=========================*/
+/*    TIJD CONFIGURATIE    */
+/*=========================*/
 const int TimeModuleUpdate = 10000; // every 10 seconds
 const int timeoutBuzzer    = 5000;
 const int refreshTime      = 16;
 
+/*=========================*/
+/*    PIN CONFIGURATIE     */
+/*=========================*/
 int RCLKPin = 3;
 int SRCLKPin = 4;
 int dataPin = 2;
 int d[] = {5,6,7,8};
+
 ThreeWire myWire(10,9,11); // IO, SCLK, CE
+
 int buzzerPin = A0;//14;//A0;
 int tempPin   = A2;
 int knopKlant = A4;
@@ -110,6 +117,9 @@ int currentBuzzerTime = -1;
 void loop() {
   // Ontvang huidige tijd van RTC module
   RtcDateTime now = Rtc.GetDateTime();
+  int val  = analogRead(A3);
+  float mv = (float)val/1024*5000;
+  float c  = mv/10; 
 
   // Voor eeuwig laten runnen
   while (1) {
@@ -142,9 +152,6 @@ void loop() {
     /*=========================*/
     /*       TEMPERATUUR       */
     /*=========================*/
-    int val = analogRead(A3);
-    float mv = (float)val/1024*5000;
-    float celcius = mv/10;
     
     
 
@@ -156,6 +163,9 @@ void loop() {
       // Ontvang huidige tijd van RTC module
       now = Rtc.GetDateTime();
       currentKlokTime=0;
+      val = analogRead(A3);
+      mv = (float)val/1024*5000;
+      c = mv/10;
     }
     // Moeten we het scherm updaten?
     if (currentScreenTime>=refreshTime){
@@ -163,7 +173,7 @@ void loop() {
       if (afwisseling<5000) {
         toonUur(&now,refreshTime);
       } else {
-        toonTemp(celcius,refreshTime);
+        toonTemp(c,refreshTime);
       }
       currentScreenTime=0;
     }
