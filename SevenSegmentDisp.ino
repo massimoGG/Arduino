@@ -22,10 +22,6 @@ static unsigned char cijfers[] {
   252,96,218,242,102,182,190,224,254,246
 };// 0 1 2 3 4 5 6 7 8 9
 
-static unsigned char letters[] {
-  238,62,156,122,158,142,110,28,252
-};// A b C D      E F H E  L   O
-
 RtcDS1302<ThreeWire> Rtc(myWire);
 
 void setup() {
@@ -54,16 +50,6 @@ void setup() {
   digitalWrite(buzzerPin,false);
   pinMode(knopKlant, INPUT_PULLUP);
   pinMode(knopKassa, INPUT_PULLUP);
-}
-
-/*
- * Toon een Cijfer of letter op een bepaalde digidisplay voor duration ms
- */
-void toonASCII(unsigned char c, unsigned char digidisplay, int duration) {
-  
-}
-void toonString(const char *string, int lengte) {
-  
 }
 
 /*
@@ -110,17 +96,6 @@ void toonTemp(float temp, int duration){
   toonCijfer(cijfers[eenheid]|0x01,d[1],duration/4);
   toonCijfer(cijfers[komma1],d[2],duration/4);
   toonCijfer(letters[2],d[3],duration/4);
-}
-
-void toonGetal(int cijfer, int duration){
-  unsigned char duizendtal= cijfer/1000;
-  unsigned char honderdtal = (cijfer-duizendtal*1000)/100;
-  unsigned char tiental   = (cijfer-duizendtal*1000-honderdtal*100)/10;
-  unsigned char eenheid   = (cijfer-duizendtal*1000-honderdtal*100-tiental*10);
-  toonCijfer(cijfers[duizendtal],d[0],duration/4);
-  toonCijfer(cijfers[honderdtal],d[1],duration/4);
-  toonCijfer(cijfers[tiental],d[2],duration/4);
-  toonCijfer(cijfers[eenheid],d[3],duration/4);
 }
 
 int afwisseling = 0;
