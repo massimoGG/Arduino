@@ -221,28 +221,19 @@ void loop() {
     /*=========================*/
     /*         KNOPPEN         */
     /*=========================*/
-    // Klant knop 
     if (digitalRead(buttonCustomer)==1) {
-      // Zet de led aan
       digitalWrite(ledPin,true);
       // Start timer
       currentBuzzerTime=0;
     }
-    // Kassa knop
     if (digitalRead(buttonRegister)==1) {
-      // Zet de led terug uit
       digitalWrite(ledPin,false);
-      // Zet ook de buzzer uit indien dit het geval was
       digitalWrite(buzzerPin,false);
       currentBuzzerTime=-1;
     }
-    // Zijn de 5 seconden verlopen voor de buzzer? 
     if (currentBuzzerTime>=timeoutBuzzer) {
-      // Zet de buzzer aan
       digitalWrite(buzzerPin,true);
     }
-    
-    
 
     /*=========================*/
     /*     KLOK & SEGMENT      */
@@ -285,15 +276,12 @@ void loop() {
     // we updaten de timer met 1 ms
     delay(1);
     int eindet = millis();
-    // Tijdsverschil berekenen
     int delta = (eindet-begint);
     
-    // Alle huidige tijden optellen
     currentKlokTime   += delta;
     currentScreenTime += delta;
     if (currentTimeText>=0) currentTimeText += delta;
 
-    // Enkel optellen als de timer aan staat
     if (currentBuzzerTime>=0) currentBuzzerTime += delta;
 
     afwisseling+=delta;
