@@ -100,8 +100,7 @@ void toonUur(const RtcDateTime *dt, int duration){
 void toonTemp(float temp, int duration){
   unsigned char tiental   = (char)(temp/10);
   unsigned char eenheid   = (char)(temp-tiental*10);
-  unsigned char komma1    = (char)((temp-tiental*10-eenheid)*10); // 0.52 ofzo*10->5.2
-  unsigned char komma2    = (char)((temp-tiental*10-eenheid-komma1)); //0.52->
+  unsigned char komma1    = (char)((temp-tiental*10-eenheid)*10);
   // Show hour on first two displays
   toonCijfer(cijfers[tiental],d[0],duration/4);
   toonCijfer(cijfers[eenheid]|0x01,d[1],duration/4);
