@@ -22,6 +22,10 @@ static unsigned char cijfers[] {
   252,96,218,242,102,182,190,224,254,246
 };// 0 1 2 3 4 5 6 7 8 9
 
+static unsigned char letters[] {
+  238,62,156,122,158,142,110,28,252
+};// A b C D      E F H E  L   O
+
 RtcDS1302<ThreeWire> Rtc(myWire);
 
 void setup() {
