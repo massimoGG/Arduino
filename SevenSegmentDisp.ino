@@ -181,7 +181,7 @@ void loop() {
     // Moeten we het scherm updaten?
     if (currentScreenTime>=refreshTime){
       // Om de 16 ms
-      if (afwisseling<2500) {
+      if (afwisseling<5000) {
         toonUur(&now,refreshTime);
       } else {
         toonTemp(celcius,refreshTime);
