@@ -79,6 +79,17 @@ int showText          = 0;
 // Initialisation of RTC module
 RtcDS1302<ThreeWire> Rtc(myWire);
 
+// Predefinitions
+void toonASCII(unsigned char c, unsigned char digidisplay, int duration);
+void toonString(const char *string, int strsize, int showtime,int timepershift, int *currentTime);
+void toonCijfer(unsigned char cijfer, unsigned char digidisplay, int duration);
+void toonUur(const RtcDateTime *dt, int duration);
+void toonTemp(float temp, int duration);
+void toonGetal(int cijfer, int duration);
+void sp(int p, int s);
+double getC();
+
+
 void setup() {
   pinMode(RCLKPin, OUTPUT);
   pinMode(SRCLKPin, OUTPUT);
@@ -105,6 +116,91 @@ void setup() {
   RtcDateTime now = Rtc.GetDateTime();
   if (now < compiled) {
     Rtc.SetDateTime(compiled);
+  }
+}
+
+void loop() {
+  // Ontvang huidige tijd van RTC module
+  RtcDateTime now = Rtc.GetDateTime();
+  /*=========================*/
+  /*       TEMPERATUUR       */
+  /*=========================*/
+  double celcius = getC();
+
+  // Voor eeuwig laten runnen
+  while (1) {
+    int begint = millis();
+    
+    /*=========================*/
+    /*         KNOPPEN         */
+    /*=========================*/
+    //if (digitalRead(buttonCustomer)==1 or
+    if (cs.capacitiveSensor(20)>1000 and currentBuzzerTime==-1) {
+      digitalWrite(ledPin,true);
+      // Start timer
+      currentBuzzerTime=0;
+    }
+    if (digitalRead(buttonRegister)==1) {
+      digitalWrite(ledPin,false);
+      digitalWrite(buzzerPin,false);
+      currentBuzzerTime=-1;
+      showText=2;
+    }
+    if (currentBuzzerTime>=timeoutBuzzer) {
+      digitalWrite(buzzerPin,true);
+    }
+
+    /*=========================*/
+    /*     KLOK & SEGMENT      */
+    /*=========================*/
+    // Moeten we de klok updaten?
+    if (currentKlokTime>=TimeModuleUpdate){
+      // Ontvang huidige tijd van RTC module
+      now = Rtc.GetDateTime();
+      currentKlokTime=0;
+      celcius = getC();
+    }
+    // Moeten we het scherm updaten?
+    if (currentScreenTime>=refreshTime){
+      /*=========================*/
+      /*      ROLLING TEXT       */
+      /*=========================*/
+      if (showText>0) {
+        // Show HELLO for two times
+        toonString("HELLO", 5, refreshTime, 200, &currentTimeText);
+        if (currentTimeText==-1) {
+          // End of string
+          showText--;
+        }
+      } else {
+        // Show clock & temp
+        if (afwisseling<SHOWTIME) {
+          toonUur(&now,refreshTime);
+        } else {
+          toonTemp(celcius,refreshTime);
+        }
+      }
+      currentScreenTime=0;
+    }
+    
+    /*=========================*/
+    /*        TIMER CORE       */
+    /*=========================*/
+    // we updaten de timer met 1 ms
+    delay(1);
+    int eindet = millis();
+    int delta = (eindet-begint);
+    
+    currentKlokTime   += delta;
+    currentScreenTime += delta;
+    if (currentTimeText>=0) currentTimeText += delta;
+
+    if (currentBuzzerTime>=0) currentBuzzerTime += delta;
+
+    afwisseling+=delta;
+    if (afwisseling>=SHOWTIME*2){
+      afwisseling=0;
+    }
   }
 }
 
@@ -233,89 +329,4 @@ double getC() {
   if(celcius>20) sp(tempLED[1],true);
   else sp(tempLED[2],true);
   return celcius;
-}
-
-void loop() {
-  // Ontvang huidige tijd van RTC module
-  RtcDateTime now = Rtc.GetDateTime();
-  /*=========================*/
-  /*       TEMPERATUUR       */
-  /*=========================*/
-  double celcius = getC();
-
-  // Voor eeuwig laten runnen
-  while (1) {
-    int begint = millis();
-    
-    /*=========================*/
-    /*         KNOPPEN         */
-    /*=========================*/
-    //if (digitalRead(buttonCustomer)==1 or
-    if (cs.capacitiveSensor(20)>1000 and currentBuzzerTime==-1) {
-      digitalWrite(ledPin,true);
-      // Start timer
-      currentBuzzerTime=0;
-    }
-    if (digitalRead(buttonRegister)==1) {
-      digitalWrite(ledPin,false);
-      digitalWrite(buzzerPin,false);
-      currentBuzzerTime=-1;
-      showText=2;
-    }
-    if (currentBuzzerTime>=timeoutBuzzer) {
-      digitalWrite(buzzerPin,true);
-    }
-
-    /*=========================*/
-    /*     KLOK & SEGMENT      */
-    /*=========================*/
-    // Moeten we de klok updaten?
-    if (currentKlokTime>=TimeModuleUpdate){
-      // Ontvang huidige tijd van RTC module
-      now = Rtc.GetDateTime();
-      currentKlokTime=0;
-      celcius = getC();
-    }
-    // Moeten we het scherm updaten?
-    if (currentScreenTime>=refreshTime){
-      /*=========================*/
-      /*      ROLLING TEXT       */
-      /*=========================*/
-      if (showText>0) {
-        // Show HELLO for two times
-        toonString("HELLO", 5, refreshTime, 200, &currentTimeText);
-        if (currentTimeText==-1) {
-          // End of string
-          showText--;
-        }
-      } else {
-        // Show clock & temp
-        if (afwisseling<SHOWTIME) {
-          toonUur(&now,refreshTime);
-        } else {
-          toonTemp(celcius,refreshTime);
-        }
-      }
-      currentScreenTime=0;
-    }
-    
-    /*=========================*/
-    /*        TIMER CORE       */
-    /*=========================*/
-    // we updaten de timer met 1 ms
-    delay(1);
-    int eindet = millis();
-    int delta = (eindet-begint);
-    
-    currentKlokTime   += delta;
-    currentScreenTime += delta;
-    if (currentTimeText>=0) currentTimeText += delta;
-
-    if (currentBuzzerTime>=0) currentBuzzerTime += delta;
-
-    afwisseling+=delta;
-    if (afwisseling>=SHOWTIME*2){
-      afwisseling=0;
-    }
-  }
 }
