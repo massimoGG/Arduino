@@ -251,7 +251,7 @@ void loop() {
     /*         KNOPPEN         */
     /*=========================*/
     //if (digitalRead(buttonCustomer)==1 or
-    if (cs.capacitiveSensor(30)>1000 and currentBuzzerTime==-1) {
+    if (cs.capacitiveSensor(20)>1000 and currentBuzzerTime==-1) {
       digitalWrite(ledPin,true);
       // Start timer
       currentBuzzerTime=0;
