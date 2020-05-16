@@ -1,5 +1,15 @@
+/*
+ * Arduino ELSY Advanced
+ * Written by Massimo Giardina FIIW 2019-2020
+ */
+/*=========================*/
+/*        LIBRARIES        */
+/*=========================*/
+// Clock module
 #include <ThreeWire.h>  
 #include <RtcDS1302.h>
+// Capsense library
+#include <CapacitiveSensor.h>
 
 /*=========================*/
 /*   TIJD CONFIGURATION    */
@@ -20,22 +30,21 @@ int dataPin = 2;
 // Common ground pins for 7segment displays
 int gndSeg[] = {5,6,7,8};
 int tempLED[] = {A2,A1,13};
+int capsenseSend = A5;
+int capsenseSensor = A4;
 
 // Pin config for RTC 1302 module
 ThreeWire myWire(10,9,11); // IO, SCLK, CE
-
+// Pin config for Capsense
+CapacitiveSensor   cs = CapacitiveSensor(capsenseSend,capsenseSensor);
 // Buzzer pin
 int buzzerPin = A0;//14;//A0;
-
 // Temperature pin
 int tempPin   = A3;
-
 // Button of customer
-int buttonCustomer = A4;
-
+int buttonCustomer = 0;
 // Button of register
-int buttonRegister = A5;
-
+int buttonRegister = 1;
 // LED pin
 int ledPin    = 12;
 
@@ -241,7 +250,8 @@ void loop() {
     /*=========================*/
     /*         KNOPPEN         */
     /*=========================*/
-    if (digitalRead(buttonCustomer)==1) {
+    //if (digitalRead(buttonCustomer)==1 or
+    if (cs.capacitiveSensor(30)>1000) {
       digitalWrite(ledPin,true);
       // Start timer
       currentBuzzerTime=0;
